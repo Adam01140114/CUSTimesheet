@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timesheet Portal - Employee Time Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 shadow-lg border-b border-slate-200 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock text-3xl text-primary-600 dark:text-primary-400"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Timesheet Portal</h1>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">Employee Time Tracking</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="userInfo" class="hidden">
+                        <span class="text-sm text-slate-600 dark:text-slate-400">Welcome, <span id="userName"></span></span>
+                    </div>
+                    <button id="logoutBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                    <button id="themeToggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login/Signup Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user text-2xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Welcome to Timesheet Portal</h3>
+                <p class="text-slate-600 dark:text-slate-400">Sign in to access your timesheet</p>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-4 hidden">
+                <div>
+                    <label for="loginEmail" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Email Address *
+                    </label>
+                    <input type="email" id="loginEmail" name="loginEmail" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label for="loginPassword" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Password *
+                    </label>
+                    <input type="password" id="loginPassword" name="loginPassword" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+                <button type="submit" id="loginBtn"
+                    class="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                </button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signupForm" class="space-y-4">
+                <div>
+                    <label for="signupName" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Full Name *
+                    </label>
+                    <input type="text" id="signupName" name="signupName" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label for="signupEmail" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Email Address *
+                    </label>
+                    <input type="email" id="signupEmail" name="signupEmail" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label for="signupPassword" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Password *
+                    </label>
+                    <input type="password" id="signupPassword" name="signupPassword" required minlength="6"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+                <button type="submit" id="signupBtn"
+                    class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800">
+                    <i class="fas fa-user-plus mr-2"></i>Create Account
+                </button>
+            </form>
+
+            <div class="text-center mt-6">
+                <button id="toggleAuth" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm">
+                    Already have an account? Sign in
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Current Tasks Section -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-tasks text-xl text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-bold text-white">Current Tasks</h2>
+                        <p class="text-primary-100">Available tasks for time tracking</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="currentTasks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Tasks will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Timesheet Section -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-calendar-alt text-xl text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-bold text-white">Daily Timesheet</h2>
+                        <p class="text-primary-100">Track your daily work activities</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <!-- Date Selection -->
+                <div class="mb-6 text-center">
+                    <label for="selectedDate" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        <i class="fas fa-calendar mr-2 text-primary-600"></i>Select Date *
+                    </label>
+                    <input type="date" id="selectedDate" name="selectedDate" required
+                        class="w-full md:w-auto px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+
+                <!-- Timesheet Inputs -->
+                <div id="timesheetInputs" class="hidden">
+                    <div class="space-y-4">
+                        <!-- 9am-10am -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>9:00 AM - 10:00 AM
+                            </label>
+                            <div id="tasks-9am" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('9am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+
+                        <!-- 10am-11am -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>10:00 AM - 11:00 AM
+                            </label>
+                            <div id="tasks-10am" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('10am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+
+                        <!-- 11am-12pm -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>11:00 AM - 12:00 PM
+                            </label>
+                            <div id="tasks-11am" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('11am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+
+                        <!-- 12pm-1pm -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>12:00 PM - 1:00 PM
+                            </label>
+                            <div id="tasks-12pm" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('12pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+
+                        <!-- 1pm-2pm -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>1:00 PM - 2:00 PM
+                            </label>
+                            <div id="tasks-1pm" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('1pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+
+                        <!-- 2pm-3pm -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>2:00 PM - 3:00 PM
+                            </label>
+                            <div id="tasks-2pm" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('2pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+
+                        <!-- 3pm-4pm -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>3:00 PM - 4:00 PM
+                            </label>
+                            <div id="tasks-3pm" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('3pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+
+                        <!-- 4pm-5pm -->
+                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>4:00 PM - 5:00 PM
+                            </label>
+                            <div id="tasks-4pm" class="space-y-2">
+                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Select a task...</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="addTaskInput('4pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                <i class="fas fa-plus mr-1"></i>Add another task
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <button id="submitTimesheet" 
+                            class="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800">
+                            <i class="fas fa-save mr-2"></i>
+                            Submit Timesheet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase (modular SDK via ESM) -->
+    <script type="module">
+        // ----- Firebase Setup -----
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import {
+            getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, getDoc, onSnapshot
+        } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+        import {
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile
+        } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBESXzUMBCBEjCcXPbDf6dtOIvPOaeHRro",
+            authDomain: "custimesheet.firebaseapp.com",
+            projectId: "custimesheet",
+            storageBucket: "custimesheet.firebasestorage.app",
+            messagingSenderId: "685823796911",
+            appId: "1:685823796911:web:428460f86ee09a3aed165a",
+            measurementId: "G-CJ2JKW60XJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const tasksRef = collection(db, "timesheet_tasks");
+        const timesheetsRef = collection(db, "timesheets");
+
+        // ----- Theme Toggle -----
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // ----- Element References -----
+        const selectedDate = document.getElementById('selectedDate');
+        const timesheetInputs = document.getElementById('timesheetInputs');
+        const submitTimesheet = document.getElementById('submitTimesheet');
+        const currentTasks = document.getElementById('currentTasks');
+        const authModal = document.getElementById('authModal');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const toggleAuth = document.getElementById('toggleAuth');
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+
+        // ----- Global Variables -----
+        let currentTasksList = [];
+        let currentTimesheetData = null;
+        let currentUser = null;
+
+        // ----- Authentication Functions -----
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+        }
+
+        function showAuthModal() {
+            authModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideAuthModal() {
+            authModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function showMainContent() {
+            authModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function updateUserInterface(user) {
+            if (user) {
+                userName.textContent = user.displayName || user.email;
+                userInfo.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                showMainContent();
+            } else {
+                userInfo.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+                showAuthModal();
+            }
+        }
+
+        // ----- Authentication Event Listeners -----
+        toggleAuth.addEventListener('click', () => {
+            const isLoginVisible = !loginForm.classList.contains('hidden');
+            if (isLoginVisible) {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                toggleAuth.textContent = 'Already have an account? Sign in';
+            } else {
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                toggleAuth.textContent = "Don't have an account? Sign up";
+            }
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(loginForm);
+            const email = formData.get('loginEmail');
+            const password = formData.get('loginPassword');
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing in...';
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                currentUser = userCredential.user;
+                
+                // Save user info to cookies
+                setCookie('userEmail', email, 30);
+                setCookie('userName', currentUser.displayName || email, 30);
+                
+                updateUserInterface(currentUser);
+                loginForm.reset();
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed: ' + error.message);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Sign In';
+            }
+        });
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(signupForm);
+            const name = formData.get('signupName');
+            const email = formData.get('signupEmail');
+            const password = formData.get('signupPassword');
+
+            signupBtn.disabled = true;
+            signupBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                currentUser = userCredential.user;
+                
+                // Update user profile with name
+                await updateProfile(currentUser, { displayName: name });
+                
+                // Save user info to cookies
+                setCookie('userEmail', email, 30);
+                setCookie('userName', name, 30);
+                
+                updateUserInterface(currentUser);
+                signupForm.reset();
+            } catch (error) {
+                console.error('Signup error:', error);
+                alert('Signup failed: ' + error.message);
+            } finally {
+                signupBtn.disabled = false;
+                signupBtn.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Create Account';
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                currentUser = null;
+                deleteCookie('userEmail');
+                deleteCookie('userName');
+                updateUserInterface(null);
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        // ----- Auth State Listener -----
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                updateUserInterface(user);
+            } else {
+                // Always show auth modal on page load
+                updateUserInterface(null);
+            }
+        });
+
+        // ----- Load Current Tasks -----
+        function loadCurrentTasks() {
+            const q = query(tasksRef, where('status', '==', 'active'));
+            onSnapshot(q, (snapshot) => {
+                currentTasksList = [];
+                currentTasks.innerHTML = '';
+                
+                snapshot.forEach((doc) => {
+                    const task = { id: doc.id, ...doc.data() };
+                    currentTasksList.push(task);
+                    
+                    const taskElement = document.createElement('div');
+                    taskElement.className = 'bg-slate-50 dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600';
+                    taskElement.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-tasks text-primary-600 dark:text-primary-400 text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-slate-900 dark:text-slate-100">${task.name}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${task.description || 'No description'}</p>
+                            </div>
+                        </div>
+                    `;
+                    currentTasks.appendChild(taskElement);
+                });
+
+                if (currentTasksList.length === 0) {
+                    currentTasks.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <i class="fas fa-tasks text-4xl text-slate-400 dark:text-slate-500 mb-4"></i>
+                            <p class="text-slate-500 dark:text-slate-400">No active tasks available</p>
+                            <p class="text-sm text-slate-400 dark:text-slate-500">Contact your administrator to add tasks</p>
+                        </div>
+                    `;
+                }
+                
+                // Update task dropdowns
+                populateTaskDropdowns();
+            });
+        }
+
+        // ----- Populate Task Dropdowns -----
+        function populateTaskDropdowns() {
+            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            
+            timeSlots.forEach(slot => {
+                const container = document.getElementById(`tasks-${slot}`);
+                if (container) {
+                    const selects = container.querySelectorAll('select');
+                    selects.forEach(select => {
+                        // Clear existing options except the first one
+                        while (select.children.length > 1) {
+                            select.removeChild(select.lastChild);
+                        }
+                        
+                        // Add "Lunch Break" option first
+                        const lunchOption = document.createElement('option');
+                        lunchOption.value = 'Lunch Break';
+                        lunchOption.textContent = 'Lunch Break';
+                        select.appendChild(lunchOption);
+                        
+                        // Add current tasks as options
+                        currentTasksList.forEach(task => {
+                            const option = document.createElement('option');
+                            option.value = task.name;
+                            option.textContent = task.name;
+                            select.appendChild(option);
+                        });
+                    });
+                }
+            });
+            
+            // Add event listeners to handle lunch break restrictions
+            addLunchBreakRestrictions();
+        }
+
+        // ----- Add Lunch Break Restrictions -----
+        function addLunchBreakRestrictions() {
+            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            
+            timeSlots.forEach(slot => {
+                const container = document.getElementById(`tasks-${slot}`);
+                if (container) {
+                    const selects = container.querySelectorAll('select');
+                    selects.forEach(select => {
+                        select.addEventListener('change', function() {
+                            updateLunchBreakAvailability();
+                        });
+                    });
+                }
+            });
+        }
+
+        // ----- Update Lunch Break Availability -----
+        function updateLunchBreakAvailability() {
+            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            let lunchBreakSelected = false;
+            let selectedSlot = null;
+            
+            // Check if lunch break is already selected
+            timeSlots.forEach(slot => {
+                const container = document.getElementById(`tasks-${slot}`);
+                if (container) {
+                    const selects = container.querySelectorAll('select');
+                    selects.forEach(select => {
+                        if (select.value === 'Lunch Break') {
+                            lunchBreakSelected = true;
+                            selectedSlot = slot;
+                        }
+                    });
+                }
+            });
+            
+            // Update all dropdowns to disable/enable lunch break option
+            timeSlots.forEach(slot => {
+                const container = document.getElementById(`tasks-${slot}`);
+                if (container) {
+                    const selects = container.querySelectorAll('select');
+                    selects.forEach(select => {
+                        const lunchOption = select.querySelector('option[value="Lunch Break"]');
+                        if (lunchOption) {
+                            if (lunchBreakSelected && slot !== selectedSlot) {
+                                // Disable lunch break in other slots
+                                lunchOption.disabled = true;
+                                lunchOption.style.color = '#9ca3af';
+                                lunchOption.style.backgroundColor = '#f3f4f6';
+                            } else {
+                                // Enable lunch break in this slot
+                                lunchOption.disabled = false;
+                                lunchOption.style.color = '';
+                                lunchOption.style.backgroundColor = '';
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        // ----- Date Selection Handler -----
+        selectedDate.addEventListener('change', async (e) => {
+            const date = e.target.value;
+            if (date) {
+                timesheetInputs.classList.remove('hidden');
+                await loadTimesheetForDate(date);
+            } else {
+                timesheetInputs.classList.add('hidden');
+            }
+        });
+
+        // ----- Load Timesheet for Date -----
+        async function loadTimesheetForDate(date) {
+            try {
+                const q = query(timesheetsRef, where('date', '==', date));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const timesheetDoc = querySnapshot.docs[0];
+                    currentTimesheetData = { id: timesheetDoc.id, ...timesheetDoc.data() };
+                    populateTimesheetFields(currentTimesheetData);
+                } else {
+                    currentTimesheetData = null;
+                    clearTimesheetFields();
+                }
+            } catch (error) {
+                console.error('Error loading timesheet:', error);
+            }
+        }
+
+        // ----- Populate Timesheet Fields -----
+        function populateTimesheetFields(data) {
+            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            
+            timeSlots.forEach(slot => {
+                const container = document.getElementById(`tasks-${slot}`);
+                container.innerHTML = '';
+                
+                if (data.tasks && data.tasks[slot] && data.tasks[slot].length > 0) {
+                    data.tasks[slot].forEach((task, index) => {
+                        const input = createTaskInput(task, slot, index);
+                        container.appendChild(input);
+                    });
+                } else {
+                    const input = createTaskInput('', slot, 0);
+                    container.appendChild(input);
+                }
+            });
+            
+            // Apply lunch break restrictions after populating data
+            updateLunchBreakAvailability();
+        }
+
+        // ----- Clear Timesheet Fields -----
+        function clearTimesheetFields() {
+            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            
+            timeSlots.forEach(slot => {
+                const container = document.getElementById(`tasks-${slot}`);
+                container.innerHTML = '';
+                const input = createTaskInput('', slot, 0);
+                container.appendChild(input);
+            });
+            
+            // Apply lunch break restrictions after clearing fields
+            updateLunchBreakAvailability();
+        }
+
+        // ----- Create Task Input -----
+        function createTaskInput(value, timeSlot, index) {
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'flex items-center space-x-2';
+            
+            // Create dropdown with available tasks
+            let optionsHTML = '<option value="">Select a task...</option>';
+            
+            // Add "Lunch Break" option first
+            const lunchSelected = value === 'Lunch Break' ? 'selected' : '';
+            optionsHTML += `<option value="Lunch Break" ${lunchSelected}>Lunch Break</option>`;
+            
+            // Add current tasks as options
+            currentTasksList.forEach(task => {
+                const selected = value === task.name ? 'selected' : '';
+                optionsHTML += `<option value="${task.name}" ${selected}>${task.name}</option>`;
+            });
+            
+            inputGroup.innerHTML = `
+                <select class="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                    ${optionsHTML}
+                </select>
+                ${index > 0 ? `<button type="button" onclick="removeTaskInput(this)" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                    <i class="fas fa-times"></i>
+                </button>` : ''}
+            `;
+            
+            // Add event listener for lunch break restrictions
+            const select = inputGroup.querySelector('select');
+            select.addEventListener('change', function() {
+                updateLunchBreakAvailability();
+            });
+            
+            return inputGroup;
+        }
+
+        // ----- Add Task Input -----
+        window.addTaskInput = function(timeSlot) {
+            const container = document.getElementById(`tasks-${timeSlot}`);
+            const index = container.children.length;
+            const input = createTaskInput('', timeSlot, index);
+            container.appendChild(input);
+            
+            // Update lunch break availability after adding new input
+            updateLunchBreakAvailability();
+        };
+
+        // ----- Remove Task Input -----
+        window.removeTaskInput = function(button) {
+            button.parentElement.remove();
+            
+            // Update lunch break availability after removing input
+            updateLunchBreakAvailability();
+        };
+
+        // ----- Submit Timesheet -----
+        submitTimesheet.addEventListener('click', async () => {
+            const date = selectedDate.value;
+            if (!date) {
+                alert('Please select a date first');
+                return;
+            }
+
+            submitTimesheet.disabled = true;
+            submitTimesheet.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+
+            try {
+                const tasks = {};
+                const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+                
+                timeSlots.forEach(slot => {
+                    const container = document.getElementById(`tasks-${slot}`);
+                    const selects = container.querySelectorAll('select');
+                    tasks[slot] = Array.from(selects)
+                        .map(select => select.value.trim())
+                        .filter(value => value !== '');
+                });
+
+                const timesheetData = {
+                    date: date,
+                    tasks: tasks,
+                    submittedAt: serverTimestamp(),
+                    submittedBy: currentUser?.displayName || currentUser?.email || 'Employee'
+                };
+
+                if (currentTimesheetData) {
+                    // Update existing timesheet
+                    await updateDoc(doc(db, 'timesheets', currentTimesheetData.id), timesheetData);
+                } else {
+                    // Create new timesheet
+                    await addDoc(timesheetsRef, timesheetData);
+                }
+
+                alert('Timesheet submitted successfully!');
+                await loadTimesheetForDate(date);
+
+            } catch (error) {
+                console.error('Error submitting timesheet:', error);
+                alert('Failed to submit timesheet. Please try again.');
+            } finally {
+                submitTimesheet.disabled = false;
+                submitTimesheet.innerHTML = '<i class="fas fa-save mr-2"></i>Submit Timesheet';
+            }
+        });
+
+        // ----- Keyboard Shortcuts -----
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Shift to go to admin page
+            if (e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                window.location.href = 'timesheetadmin.html';
+            }
+        });
+
+        // ----- Initialize -----
+        loadCurrentTasks();
+        
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        selectedDate.value = today;
+        selectedDate.dispatchEvent(new Event('change'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timesheet Admin Portal - Task Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 shadow-lg border-b border-slate-200 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-cogs text-3xl text-primary-600 dark:text-primary-400"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Timesheet Admin Portal</h1>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">Task Management & Timesheet Overview</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Password Protection Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-lock text-2xl text-red-600 dark:text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Admin Access Required</h3>
+                <p class="text-slate-600 dark:text-slate-400">Enter the admin password to continue</p>
+            </div>
+            <form id="passwordForm" class="space-y-4">
+                <div>
+                    <label for="adminPassword" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Admin Password *
+                    </label>
+                    <input type="password" id="adminPassword" name="adminPassword" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+                <button type="submit" id="passwordBtn"
+                    class="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800">
+                    <i class="fas fa-unlock mr-2"></i>Access Admin Panel
+                </button>
+            </form>
+            <div id="passwordError" class="mt-4 text-center text-red-600 dark:text-red-400 text-sm hidden">
+                Incorrect password. Please try again.
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-tasks text-lg sm:text-2xl text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-2 sm:ml-4">
+                        <p class="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">Total Tasks</p>
+                        <p id="totalTasks" class="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-check-circle text-lg sm:text-2xl text-green-600 dark:text-green-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-2 sm:ml-4">
+                        <p class="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">Active Tasks</p>
+                        <p id="activeTasks" class="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-clock text-lg sm:text-2xl text-yellow-600 dark:text-yellow-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-2 sm:ml-4">
+                        <p class="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">Today's Timesheets</p>
+                        <p id="todayTimesheets" class="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-calendar text-lg sm:text-2xl text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-2 sm:ml-4">
+                        <p class="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">This Week</p>
+                        <p id="weekTimesheets" class="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Management Section -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden mb-8">
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-tasks text-xl text-white"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h2 class="text-xl font-bold text-white">Task Management</h2>
+                            <p class="text-primary-100">Create and manage timesheet tasks</p>
+                        </div>
+                    </div>
+                    <button id="addTaskBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Add Task
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="tasksList" class="space-y-4">
+                    <!-- Tasks will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Timesheet Overview Section -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-calendar-alt text-xl text-white"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h2 class="text-xl font-bold text-white">Timesheet Overview</h2>
+                            <p class="text-primary-100">View submitted timesheets</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <input type="text" id="searchEmployee" placeholder="Search by employee name..." class="px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm">
+                        <input type="date" id="filterDate" class="px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm">
+                        <button id="refreshBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 sm:p-6">
+                <!-- Mobile Card View -->
+                <div id="mobileTimesheetsView" class="space-y-4 sm:hidden">
+                    <!-- Mobile cards will be populated here -->
+                </div>
+                
+                <!-- Desktop Table View -->
+                <div class="hidden sm:block overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 dark:bg-slate-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Submitted By</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tasks Completed</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Submitted At</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timesheetsTable" class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                            <!-- Data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-tasks text-2xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Add New Task</h3>
+                <p class="text-slate-600 dark:text-slate-400">Create a new task for timesheet tracking</p>
+            </div>
+            <form id="addTaskForm" class="space-y-4">
+                <div>
+                    <label for="taskName" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Task Name *
+                    </label>
+                    <input type="text" id="taskName" name="taskName" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label for="taskDescription" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Description
+                    </label>
+                    <textarea id="taskDescription" name="taskDescription" rows="3"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"></textarea>
+                </div>
+                <div class="flex justify-center space-x-3 pt-4">
+                    <button type="button" id="cancelAddTask" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        Add Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Timesheet Modal -->
+    <div id="viewTimesheetModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-4xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar-alt text-2xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Timesheet Details</h3>
+                <p id="timesheetEmployeeName" class="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1"></p>
+                <p id="timesheetDate" class="text-slate-600 dark:text-slate-400"></p>
+            </div>
+            <div id="timesheetDetails" class="space-y-4">
+                <!-- Timesheet details will be populated here -->
+            </div>
+            <div class="flex flex-col items-center space-y-3 pt-6">
+                <button id="exportPdfBtn" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                </button>
+                <button id="closeViewModal" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-600 dark:text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Delete Task</h3>
+                <p class="text-slate-600 dark:text-slate-400 mb-6">Are you sure you want to delete this task? This action cannot be undone.</p>
+                <div class="flex justify-center space-x-3">
+                    <button id="cancelDelete" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        Cancel
+                    </button>
+                    <button id="confirmDelete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase (modular SDK via ESM) -->
+    <script type="module">
+        // ----- Firebase Setup -----
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import {
+            getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, getDoc, onSnapshot, orderBy
+        } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBESXzUMBCBEjCcXPbDf6dtOIvPOaeHRro",
+            authDomain: "custimesheet.firebaseapp.com",
+            projectId: "custimesheet",
+            storageBucket: "custimesheet.firebasestorage.app",
+            messagingSenderId: "685823796911",
+            appId: "1:685823796911:web:428460f86ee09a3aed165a",
+            measurementId: "G-CJ2JKW60XJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const tasksRef = collection(db, "timesheet_tasks");
+        const timesheetsRef = collection(db, "timesheets");
+
+        // ----- Theme Toggle -----
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // ----- Element References -----
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordForm = document.getElementById('passwordForm');
+        const passwordBtn = document.getElementById('passwordBtn');
+        const passwordError = document.getElementById('passwordError');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const addTaskModal = document.getElementById('addTaskModal');
+        const addTaskForm = document.getElementById('addTaskForm');
+        const cancelAddTask = document.getElementById('cancelAddTask');
+        const tasksList = document.getElementById('tasksList');
+        const timesheetsTable = document.getElementById('timesheetsTable');
+        const mobileTimesheetsView = document.getElementById('mobileTimesheetsView');
+        const searchEmployee = document.getElementById('searchEmployee');
+        const filterDate = document.getElementById('filterDate');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const viewTimesheetModal = document.getElementById('viewTimesheetModal');
+        const closeViewModal = document.getElementById('closeViewModal');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDelete = document.getElementById('cancelDelete');
+        const confirmDelete = document.getElementById('confirmDelete');
+
+        // ----- Global Variables -----
+        let tasks = [];
+        let timesheets = [];
+        let taskToDelete = null;
+        let isAuthenticated = false;
+
+        // ----- Helper Functions -----
+        function formatDate(date) {
+            if (!date) return '';
+            
+            let dateObj;
+            if (date.toDate && typeof date.toDate === 'function') {
+                // Firebase timestamp
+                dateObj = date.toDate();
+            } else if (date instanceof Date) {
+                dateObj = date;
+            } else if (typeof date === 'string') {
+                // Handle different date string formats
+                if (date.includes('-')) {
+                    // yyyy-mm-dd format
+                    dateObj = new Date(date);
+                } else {
+                    dateObj = new Date(date);
+                }
+            } else {
+                dateObj = new Date(date);
+            }
+            
+            // Format as dd/mm/yyyy
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // ----- Password Protection -----
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function showMainContent() {
+            passwordModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function showPasswordModal() {
+            passwordModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Check if already authenticated
+        if (getCookie('adminAuth') === 'true') {
+            isAuthenticated = true;
+            showMainContent();
+        } else {
+            showPasswordModal();
+        }
+
+        // Password form submission
+        passwordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(passwordForm);
+            const password = formData.get('adminPassword');
+
+            passwordBtn.disabled = true;
+            passwordBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+
+            if (password === 'cus') {
+                isAuthenticated = true;
+                setCookie('adminAuth', 'true', 1); // Valid for 1 day
+                showMainContent();
+                passwordForm.reset();
+                passwordError.classList.add('hidden');
+                initializeAdminApp(); // Load data after authentication
+            } else {
+                passwordError.classList.remove('hidden');
+                passwordForm.reset();
+            }
+
+            passwordBtn.disabled = false;
+            passwordBtn.innerHTML = '<i class="fas fa-unlock mr-2"></i>Access Admin Panel';
+        });
+
+        // ----- Load Tasks -----
+        function loadTasks() {
+            onSnapshot(tasksRef, (snapshot) => {
+                tasks = [];
+                tasksList.innerHTML = '';
+                
+                snapshot.forEach((doc) => {
+                    const task = { id: doc.id, ...doc.data() };
+                    tasks.push(task);
+                    
+                    const taskElement = document.createElement('div');
+                    taskElement.className = 'bg-slate-50 dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600';
+                    taskElement.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-tasks text-primary-600 dark:text-primary-400"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">${task.name}</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">${task.description || 'No description'}</p>
+                                    <div class="flex items-center mt-1">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${task.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                                            ${task.status}
+                                        </span>
+                                        <span class="ml-2 text-xs text-slate-500 dark:text-slate-400">
+                                            Created: ${formatDate(task.createdAt)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="deleteTask('${task.id}')" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button onclick="toggleTaskStatus('${task.id}', '${task.status}')" class="text-sm px-3 py-1 rounded-lg ${task.status === 'active' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800' : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800'} transition-colors">
+                                    ${task.status === 'active' ? 'Deactivate' : 'Activate'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    tasksList.appendChild(taskElement);
+                });
+
+                updateStats();
+            });
+        }
+
+        // ----- Load Timesheets -----
+        async function loadTimesheets() {
+            try {
+                const q = query(timesheetsRef, orderBy('submittedAt', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                timesheets = [];
+                timesheetsTable.innerHTML = '';
+                
+                querySnapshot.forEach((doc) => {
+                    const timesheet = { id: doc.id, ...doc.data() };
+                    timesheets.push(timesheet);
+                });
+
+                // Sort timesheets by employee name (submittedBy)
+                timesheets.sort((a, b) => {
+                    const nameA = (a.submittedBy || 'Employee').toLowerCase();
+                    const nameB = (b.submittedBy || 'Employee').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+                
+                // Populate table with sorted data
+                timesheets.forEach(timesheet => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
+                    
+                    const submittedDate = timesheet.submittedAt?.toDate() || new Date(timesheet.submittedAt);
+                    const totalTasks = Object.values(timesheet.tasks || {}).flat().length;
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
+                            ${formatDate(timesheet.date)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user text-primary-600 dark:text-primary-400 text-sm"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <div class="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                        ${timesheet.submittedBy || 'Employee'}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                ${totalTasks} tasks
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                            <div>${formatDate(submittedDate)}</div>
+                            <div class="text-xs">${submittedDate.toLocaleTimeString()}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="viewTimesheet('${timesheet.id}')" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    `;
+                    
+                    timesheetsTable.appendChild(row);
+                });
+
+                updateStats();
+            } catch (error) {
+                console.error('Error loading timesheets:', error);
+            }
+        }
+
+        // ----- Update Stats -----
+        function updateStats() {
+            const totalTasks = tasks.length;
+            const activeTasks = tasks.filter(task => task.status === 'active').length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayTimesheets = timesheets.filter(ts => ts.date === today).length;
+            
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const weekTimesheets = timesheets.filter(ts => new Date(ts.date) >= weekAgo).length;
+            
+            document.getElementById('totalTasks').textContent = totalTasks;
+            document.getElementById('activeTasks').textContent = activeTasks;
+            document.getElementById('todayTimesheets').textContent = todayTimesheets;
+            document.getElementById('weekTimesheets').textContent = weekTimesheets;
+        }
+
+        // ----- Add Task -----
+        addTaskBtn.addEventListener('click', () => {
+            addTaskModal.classList.remove('hidden');
+        });
+
+        cancelAddTask.addEventListener('click', () => {
+            addTaskModal.classList.add('hidden');
+            addTaskForm.reset();
+        });
+
+        addTaskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(addTaskForm);
+            const taskData = {
+                name: formData.get('taskName'),
+                description: formData.get('taskDescription'),
+                status: 'active',
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                await addDoc(tasksRef, taskData);
+                addTaskModal.classList.add('hidden');
+                addTaskForm.reset();
+            } catch (error) {
+                console.error('Error adding task:', error);
+                alert('Failed to add task. Please try again.');
+            }
+        });
+
+        // ----- Toggle Task Status -----
+        window.toggleTaskStatus = async function(taskId, currentStatus) {
+            try {
+                const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+                await updateDoc(doc(db, 'timesheet_tasks', taskId), { status: newStatus });
+            } catch (error) {
+                console.error('Error updating task status:', error);
+                alert('Failed to update task status. Please try again.');
+            }
+        };
+
+        // ----- Delete Task -----
+        window.deleteTask = function(taskId) {
+            taskToDelete = taskId;
+            deleteModal.classList.remove('hidden');
+        };
+
+        cancelDelete.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+            taskToDelete = null;
+        });
+
+        confirmDelete.addEventListener('click', async () => {
+            if (taskToDelete) {
+                try {
+                    await deleteDoc(doc(db, 'timesheet_tasks', taskToDelete));
+                    deleteModal.classList.add('hidden');
+                    taskToDelete = null;
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                    alert('Failed to delete task. Please try again.');
+                }
+            }
+        });
+
+        // ----- View Timesheet -----
+        window.viewTimesheet = async function(timesheetId) {
+            try {
+                const timesheet = timesheets.find(ts => ts.id === timesheetId);
+                if (!timesheet) return;
+
+                // Store current timesheet for PDF export
+                currentTimesheetForPdf = timesheet;
+
+                document.getElementById('timesheetEmployeeName').textContent = timesheet.submittedBy || 'Unknown Employee';
+                document.getElementById('timesheetDate').textContent = `Submitted on ${formatDate(timesheet.date)}`;
+                
+                const detailsContainer = document.getElementById('timesheetDetails');
+                detailsContainer.innerHTML = '';
+
+                const timeSlots = [
+                    { key: '9am', label: '9:00 AM - 10:00 AM' },
+                    { key: '10am', label: '10:00 AM - 11:00 AM' },
+                    { key: '11am', label: '11:00 AM - 12:00 PM' },
+                    { key: '12pm', label: '12:00 PM - 1:00 PM' },
+                    { key: '1pm', label: '1:00 PM - 2:00 PM' },
+                    { key: '2pm', label: '2:00 PM - 3:00 PM' },
+                    { key: '3pm', label: '3:00 PM - 4:00 PM' },
+                    { key: '4pm', label: '4:00 PM - 5:00 PM' }
+                ];
+
+                timeSlots.forEach(slot => {
+                    const tasks = timesheet.tasks?.[slot.key] || [];
+                    if (tasks.length > 0) {
+                        const slotDiv = document.createElement('div');
+                        slotDiv.className = 'bg-slate-50 dark:bg-slate-700 rounded-lg p-4';
+                        slotDiv.innerHTML = `
+                            <h4 class="font-semibold text-slate-900 dark:text-slate-100 mb-2">${slot.label}</h4>
+                            <ul class="space-y-1">
+                                ${tasks.map(task => `<li class="text-sm text-slate-600 dark:text-slate-400">• ${task}</li>`).join('')}
+                            </ul>
+                        `;
+                        detailsContainer.appendChild(slotDiv);
+                    }
+                });
+
+                if (detailsContainer.children.length === 0) {
+                    detailsContainer.innerHTML = '<p class="text-slate-500 dark:text-slate-400 text-center py-8">No tasks recorded for this day.</p>';
+                }
+
+                viewTimesheetModal.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error viewing timesheet:', error);
+            }
+        };
+
+        closeViewModal.addEventListener('click', () => {
+            viewTimesheetModal.classList.add('hidden');
+        });
+
+        // ----- Export PDF -----
+        let currentTimesheetForPdf = null;
+
+        exportPdfBtn.addEventListener('click', () => {
+            if (currentTimesheetForPdf) {
+                exportTimesheetToPdf(currentTimesheetForPdf);
+            }
+        });
+
+        function exportTimesheetToPdf(timesheet) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Set up the PDF
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('Timesheet Report', 20, 30);
+            
+            // Employee and date info
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Employee: ${timesheet.submittedBy || 'Unknown'}`, 20, 50);
+            doc.text(`Date: ${formatDate(timesheet.date)}`, 20, 60);
+            doc.text(`Submitted: ${new Date(timesheet.submittedAt?.toDate() || timesheet.submittedAt).toLocaleString()}`, 20, 70);
+            
+            // Add a line separator
+            doc.setLineWidth(0.5);
+            doc.line(20, 80, 190, 80);
+            
+            // Time slots
+            const timeSlots = [
+                { key: '9am', label: '9:00 AM - 10:00 AM' },
+                { key: '10am', label: '10:00 AM - 11:00 AM' },
+                { key: '11am', label: '11:00 AM - 12:00 PM' },
+                { key: '12pm', label: '12:00 PM - 1:00 PM' },
+                { key: '1pm', label: '1:00 PM - 2:00 PM' },
+                { key: '2pm', label: '2:00 PM - 3:00 PM' },
+                { key: '3pm', label: '3:00 PM - 4:00 PM' },
+                { key: '4pm', label: '4:00 PM - 5:00 PM' }
+            ];
+            
+            let yPosition = 95;
+            let hasTasks = false;
+            
+            timeSlots.forEach(slot => {
+                const tasks = timesheet.tasks?.[slot.key] || [];
+                if (tasks.length > 0) {
+                    hasTasks = true;
+                    
+                    // Check if we need a new page
+                    if (yPosition > 250) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                    
+                    // Time slot header
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(slot.label, 20, yPosition);
+                    yPosition += 10;
+                    
+                    // Tasks
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    tasks.forEach(task => {
+                        if (yPosition > 270) {
+                            doc.addPage();
+                            yPosition = 20;
+                        }
+                        doc.text(`• ${task}`, 25, yPosition);
+                        yPosition += 7;
+                    });
+                    
+                    yPosition += 5; // Extra space between time slots
+                }
+            });
+            
+            if (!hasTasks) {
+                doc.setFontSize(12);
+                doc.text('No tasks recorded for this day.', 20, yPosition);
+            }
+            
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.text(`Page ${i} of ${pageCount}`, 20, 285);
+                doc.text('Generated by Timesheet Admin Portal', 120, 285);
+            }
+            
+            // Save the PDF
+            const fileName = `timesheet_${timesheet.submittedBy?.replace(/\s+/g, '_') || 'employee'}_${formatDate(timesheet.date).replace(/\//g, '-')}.pdf`;
+            doc.save(fileName);
+        }
+
+        // ----- Filter and Refresh -----
+        function applyFilters() {
+            const selectedDate = filterDate.value;
+            const searchTerm = searchEmployee.value.toLowerCase();
+            
+            let filteredTimesheets = timesheets;
+            
+            // Filter by date
+            if (selectedDate) {
+                filteredTimesheets = filteredTimesheets.filter(ts => ts.date === selectedDate);
+            }
+            
+            // Filter by employee name
+            if (searchTerm) {
+                filteredTimesheets = filteredTimesheets.filter(ts => 
+                    (ts.submittedBy || 'Employee').toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            updateTimesheetTable(filteredTimesheets);
+        }
+
+        searchEmployee.addEventListener('input', applyFilters);
+        filterDate.addEventListener('change', applyFilters);
+
+        refreshBtn.addEventListener('click', () => {
+            loadTimesheets();
+        });
+
+        // ----- Update Timesheet Table -----
+        function updateTimesheetTable(timesheetsToShow) {
+            timesheetsTable.innerHTML = '';
+            mobileTimesheetsView.innerHTML = '';
+            
+            // Sort filtered timesheets by employee name
+            timesheetsToShow.sort((a, b) => {
+                const nameA = (a.submittedBy || 'Employee').toLowerCase();
+                const nameB = (b.submittedBy || 'Employee').toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+            
+            timesheetsToShow.forEach(timesheet => {
+                const submittedDate = timesheet.submittedAt?.toDate() || new Date(timesheet.submittedAt);
+                const totalTasks = Object.values(timesheet.tasks || {}).flat().length;
+                
+                // Desktop table row
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
+                        ${timesheet.date}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-primary-600 dark:text-primary-400 text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    ${timesheet.submittedBy || 'Employee'}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            ${totalTasks} tasks
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                        <div>${formatDate(submittedDate)}</div>
+                        <div class="text-xs">${submittedDate.toLocaleTimeString()}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewTimesheet('${timesheet.id}')" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                
+                timesheetsTable.appendChild(row);
+                
+                // Mobile card
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm';
+                
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-user text-primary-600 dark:text-primary-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    ${timesheet.submittedBy || 'Employee'}
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${formatDate(timesheet.date)}</p>
+                            </div>
+                        </div>
+                        <button onclick="viewTimesheet('${timesheet.id}')" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <i class="fas fa-tasks mr-1"></i>${totalTasks} tasks
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Submitted</p>
+                            <p class="text-xs font-medium text-slate-900 dark:text-slate-100">
+                                ${formatDate(submittedDate)}
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                ${submittedDate.toLocaleTimeString()}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                mobileTimesheetsView.appendChild(card);
+            });
+        }
+
+        // ----- Close Modals on Outside Click -----
+        [addTaskModal, viewTimesheetModal, deleteModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+        });
+
+        // ----- Initialize -----
+        function initializeAdminApp() {
+            if (isAuthenticated) {
+                loadTasks();
+                loadTimesheets();
+            }
+        }
+
+        // Initialize when authenticated
+        if (isAuthenticated) {
+            initializeAdminApp();
+        }
+
+        // ----- Keyboard Shortcuts -----
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Shift to go back to client page
+            if (e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                window.location.href = 'timesheet.html';
+            }
+        });
+    </script>
+</body>
+</html>
