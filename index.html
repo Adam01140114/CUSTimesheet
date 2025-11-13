@@ -688,7 +688,13 @@
         // ----- Load Timesheet for Date -----
         async function loadTimesheetForDate(date) {
             try {
-                const q = query(timesheetsRef, where('date', '==', date));
+                // Query for timesheet by date AND current user
+                const userEmail = currentUser?.email || currentUser?.displayName || 'Employee';
+                const q = query(
+                    timesheetsRef, 
+                    where('date', '==', date),
+                    where('submittedBy', '==', userEmail)
+                );
                 const querySnapshot = await getDocs(q);
                 
                 if (!querySnapshot.empty) {
@@ -696,11 +702,26 @@
                     currentTimesheetData = { id: timesheetDoc.id, ...timesheetDoc.data() };
                     populateTimesheetFields(currentTimesheetData);
                 } else {
-                    currentTimesheetData = null;
-                    clearTimesheetFields();
+                    // Also check if there's any timesheet for this date (for display purposes)
+                    // but don't set currentTimesheetData if it's not the current user's
+                    const qAny = query(timesheetsRef, where('date', '==', date));
+                    const anySnapshot = await getDocs(qAny);
+                    
+                    if (!anySnapshot.empty) {
+                        // There's a timesheet for this date, but it's not the current user's
+                        // So we show empty fields (view-only mode will handle the rest)
+                        currentTimesheetData = null;
+                        clearTimesheetFields();
+                    } else {
+                        // No timesheet exists for this date at all
+                        currentTimesheetData = null;
+                        clearTimesheetFields();
+                    }
                 }
             } catch (error) {
                 console.error('Error loading timesheet:', error);
+                currentTimesheetData = null;
+                clearTimesheetFields();
             }
         }
 
@@ -846,19 +867,35 @@
                     tasks[slot] = taskValues;
                 });
 
+                const userEmail = currentUser?.displayName || currentUser?.email || 'Employee';
                 const timesheetData = {
                     date: date,
                     tasks: tasks,
                     submittedAt: serverTimestamp(),
-                    submittedBy: currentUser?.displayName || currentUser?.email || 'Employee'
+                    submittedBy: userEmail
                 };
 
-                if (currentTimesheetData) {
-                    // Update existing timesheet
+                // Check if there's already a timesheet for this date and user
+                if (currentTimesheetData && currentTimesheetData.submittedBy === userEmail) {
+                    // Update existing timesheet (only if it belongs to the current user)
                     await updateDoc(doc(db, 'timesheets', currentTimesheetData.id), timesheetData);
                 } else {
-                    // Create new timesheet
-                    await addDoc(timesheetsRef, timesheetData);
+                    // Check if there's another timesheet for this date by this user (edge case)
+                    const q = query(
+                        timesheetsRef, 
+                        where('date', '==', date),
+                        where('submittedBy', '==', userEmail)
+                    );
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (!querySnapshot.empty) {
+                        // Update existing timesheet
+                        const existingDoc = querySnapshot.docs[0];
+                        await updateDoc(doc(db, 'timesheets', existingDoc.id), timesheetData);
+                    } else {
+                        // Create new timesheet
+                        await addDoc(timesheetsRef, timesheetData);
+                    }
                 }
 
                 alert('Timesheet submitted successfully!');

@@ -130,6 +130,10 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <button id="importExcelBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
+                            <i class="fas fa-file-excel mr-2"></i>Import Timesheet Excel
+                        </button>
+                        <input type="file" id="importExcelFile" accept=".xlsx,.xls" class="hidden">
                         <input type="text" id="searchEmployee" placeholder="Search by employee name..." class="px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm">
                         <input type="date" id="filterDate" class="px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm">
                         <button id="refreshBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm">
@@ -323,6 +327,8 @@
         const searchEmployee = document.getElementById('searchEmployee');
         const filterDate = document.getElementById('filterDate');
         const refreshBtn = document.getElementById('refreshBtn');
+        const importExcelBtn = document.getElementById('importExcelBtn');
+        const importExcelFile = document.getElementById('importExcelFile');
         const viewTimesheetModal = document.getElementById('viewTimesheetModal');
         const closeViewModal = document.getElementById('closeViewModal');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
@@ -867,6 +873,171 @@
 
         refreshBtn.addEventListener('click', () => {
             loadTimesheets();
+        });
+
+        // ----- Import Excel Timesheet -----
+        importExcelBtn.addEventListener('click', () => {
+            importExcelFile.click();
+        });
+
+        importExcelFile.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                // Read the Excel file
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Get the first worksheet
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convert to JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                
+                // Parse the Excel data
+                // Expected format based on export: 
+                // Row 0: "Timesheet Report"
+                // Row 1: empty
+                // Row 2: ["Employee:", "Name"]
+                // Row 3: ["Date:", "date"]
+                // Row 4: ["Submitted:", "timestamp"]
+                // Row 5: empty
+                // Row 6: ["Time Slot", "Tasks"]
+                // Row 7+: [timeSlot, task1], ["", task2], etc.
+                
+                if (jsonData.length < 7) {
+                    alert('Invalid Excel file format. Please use a timesheet exported from this system.');
+                    importExcelFile.value = '';
+                    return;
+                }
+
+                // Extract employee name
+                const employeeRow = jsonData[2];
+                const employeeName = employeeRow && employeeRow[1] ? employeeRow[1].toString().trim() : null;
+                
+                if (!employeeName) {
+                    alert('Could not find employee name in the Excel file.');
+                    importExcelFile.value = '';
+                    return;
+                }
+
+                // Extract date
+                const dateRow = jsonData[3];
+                let dateStr = dateRow && dateRow[1] ? dateRow[1].toString().trim() : null;
+                
+                // Parse date (could be in various formats)
+                let date = null;
+                if (dateStr) {
+                    // Try to parse different date formats
+                    const dateObj = new Date(dateStr);
+                    if (!isNaN(dateObj.getTime())) {
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        date = `${year}-${month}-${day}`;
+                    } else {
+                        // Try parsing formats like "12/11/2025" or "11-12-2025"
+                        const dateMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+                        if (dateMatch) {
+                            const [, month, day, year] = dateMatch;
+                            date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        }
+                    }
+                }
+                
+                if (!date) {
+                    alert('Could not parse date from the Excel file. Please ensure the date is in a valid format.');
+                    importExcelFile.value = '';
+                    return;
+                }
+
+                // Extract tasks by time slot
+                const tasks = {};
+                const timeSlotMap = {
+                    '7:00 AM - 9:00 AM': '7am-9am',
+                    '9:00 AM - 11:30 AM': '9am-1130am',
+                    '11:30 AM - 12:00 PM': '1130am-12pm',
+                    '12:00 PM - 3:30 PM': '12pm-330pm',
+                    '3:30 PM - 5:30 PM': '330pm-530pm'
+                };
+
+                // Start from row 7 (index 6) where the data starts
+                let currentTimeSlot = null;
+                for (let i = 6; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || row.length === 0) continue;
+                    
+                    const timeSlotLabel = row[0] ? row[0].toString().trim() : '';
+                    const task = row[1] ? row[1].toString().trim() : '';
+                    
+                    if (timeSlotLabel && timeSlotMap[timeSlotLabel]) {
+                        // New time slot
+                        currentTimeSlot = timeSlotMap[timeSlotLabel];
+                        if (task && task !== 'No tasks') {
+                            tasks[currentTimeSlot] = [task];
+                        } else {
+                            tasks[currentTimeSlot] = [];
+                        }
+                    } else if (currentTimeSlot && task && task !== 'No tasks') {
+                        // Additional task for current time slot
+                        if (!tasks[currentTimeSlot]) {
+                            tasks[currentTimeSlot] = [];
+                        }
+                        tasks[currentTimeSlot].push(task);
+                    }
+                }
+
+                // Ensure all time slots exist
+                Object.values(timeSlotMap).forEach(slot => {
+                    if (!tasks[slot]) {
+                        tasks[slot] = [];
+                    }
+                });
+
+                // Ensure lunch break is in 1130am-12pm slot
+                if (!tasks['1130am-12pm'].includes('Lunch Break')) {
+                    tasks['1130am-12pm'].push('Lunch Break');
+                }
+
+                // Check if timesheet already exists for this date and employee
+                const q = query(
+                    timesheetsRef,
+                    where('date', '==', date),
+                    where('submittedBy', '==', employeeName)
+                );
+                const querySnapshot = await getDocs(q);
+
+                const timesheetData = {
+                    date: date,
+                    tasks: tasks,
+                    submittedAt: serverTimestamp(),
+                    submittedBy: employeeName
+                };
+
+                if (!querySnapshot.empty) {
+                    // Update existing timesheet
+                    const existingDoc = querySnapshot.docs[0];
+                    await updateDoc(doc(db, 'timesheets', existingDoc.id), timesheetData);
+                    alert(`Timesheet for ${employeeName} on ${date} has been updated successfully!`);
+                } else {
+                    // Create new timesheet
+                    await addDoc(timesheetsRef, timesheetData);
+                    alert(`Timesheet for ${employeeName} on ${date} has been imported successfully!`);
+                }
+
+                // Reload timesheets
+                await loadTimesheets();
+                
+                // Reset file input
+                importExcelFile.value = '';
+
+            } catch (error) {
+                console.error('Error importing Excel file:', error);
+                alert('Failed to import Excel file. Please ensure it is a valid timesheet file exported from this system.');
+                importExcelFile.value = '';
+            }
         });
 
         // ----- Update Timesheet Table -----
