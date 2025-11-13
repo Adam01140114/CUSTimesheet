@@ -182,130 +182,82 @@
                 <!-- Timesheet Inputs -->
                 <div id="timesheetInputs" class="hidden">
                     <div class="space-y-4">
-                        <!-- 9am-10am -->
+                        <!-- 7am-9am -->
                         <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>9:00 AM - 10:00 AM
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>7:00 AM - 9:00 AM
                             </label>
-                            <div id="tasks-9am" class="space-y-2">
+                            <div id="tasks-7am-9am" class="space-y-2">
                                 <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
                                     <option value="">Select a task...</option>
                                     <option value="Lunch Break">Lunch Break</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="addTaskInput('9am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                            <button type="button" onclick="addTaskInput('7am-9am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                                 <i class="fas fa-plus mr-1"></i>Add another task
                             </button>
                         </div>
 
-                        <!-- 10am-11am -->
+                        <!-- 9am-11:30am -->
                         <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>10:00 AM - 11:00 AM
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>9:00 AM - 11:30 AM
                             </label>
-                            <div id="tasks-10am" class="space-y-2">
+                            <div id="tasks-9am-1130am" class="space-y-2">
                                 <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
                                     <option value="">Select a task...</option>
                                     <option value="Lunch Break">Lunch Break</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="addTaskInput('10am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                            <button type="button" onclick="addTaskInput('9am-1130am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                                 <i class="fas fa-plus mr-1"></i>Add another task
                             </button>
                         </div>
 
-                        <!-- 11am-12pm -->
+                        <!-- 11:30am-12:00pm (Lunch Break - Auto-filled) -->
                         <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>11:00 AM - 12:00 PM
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>11:30 AM - 12:00 PM
                             </label>
-                            <div id="tasks-11am" class="space-y-2">
+                            <div id="tasks-1130am-12pm" class="space-y-2">
                                 <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
                                     <option value="">Select a task...</option>
-                                    <option value="Lunch Break">Lunch Break</option>
+                                    <option value="Lunch Break" selected>Lunch Break</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="addTaskInput('11am')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                            <button type="button" onclick="addTaskInput('1130am-12pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                                 <i class="fas fa-plus mr-1"></i>Add another task
                             </button>
                         </div>
 
-                        <!-- 12pm-1pm -->
+                        <!-- 12:00pm-3:30pm -->
                         <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>12:00 PM - 1:00 PM
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>12:00 PM - 3:30 PM
                             </label>
-                            <div id="tasks-12pm" class="space-y-2">
+                            <div id="tasks-12pm-330pm" class="space-y-2">
                                 <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
                                     <option value="">Select a task...</option>
                                     <option value="Lunch Break">Lunch Break</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="addTaskInput('12pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                            <button type="button" onclick="addTaskInput('12pm-330pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                                 <i class="fas fa-plus mr-1"></i>Add another task
                             </button>
                         </div>
 
-                        <!-- 1pm-2pm -->
+                        <!-- 3:30pm-5:30pm -->
                         <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>1:00 PM - 2:00 PM
+                                <i class="fas fa-clock mr-2 text-primary-600"></i>3:30 PM - 5:30 PM
                             </label>
-                            <div id="tasks-1pm" class="space-y-2">
+                            <div id="tasks-330pm-530pm" class="space-y-2">
                                 <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
                                     <option value="">Select a task...</option>
                                     <option value="Lunch Break">Lunch Break</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="addTaskInput('1pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                                <i class="fas fa-plus mr-1"></i>Add another task
-                            </button>
-                        </div>
-
-                        <!-- 2pm-3pm -->
-                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>2:00 PM - 3:00 PM
-                            </label>
-                            <div id="tasks-2pm" class="space-y-2">
-                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
-                                    <option value="">Select a task...</option>
-                                    <option value="Lunch Break">Lunch Break</option>
-                                </select>
-                            </div>
-                            <button type="button" onclick="addTaskInput('2pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                                <i class="fas fa-plus mr-1"></i>Add another task
-                            </button>
-                        </div>
-
-                        <!-- 3pm-4pm -->
-                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>3:00 PM - 4:00 PM
-                            </label>
-                            <div id="tasks-3pm" class="space-y-2">
-                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
-                                    <option value="">Select a task...</option>
-                                    <option value="Lunch Break">Lunch Break</option>
-                                </select>
-                            </div>
-                            <button type="button" onclick="addTaskInput('3pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                                <i class="fas fa-plus mr-1"></i>Add another task
-                            </button>
-                        </div>
-
-                        <!-- 4pm-5pm -->
-                        <div class="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                <i class="fas fa-clock mr-2 text-primary-600"></i>4:00 PM - 5:00 PM
-                            </label>
-                            <div id="tasks-4pm" class="space-y-2">
-                                <select class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
-                                    <option value="">Select a task...</option>
-                                    <option value="Lunch Break">Lunch Break</option>
-                                </select>
-                            </div>
-                            <button type="button" onclick="addTaskInput('4pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                            <button type="button" onclick="addTaskInput('330pm-530pm')" class="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                                 <i class="fas fa-plus mr-1"></i>Add another task
                             </button>
                         </div>
@@ -577,7 +529,7 @@
 
         // ----- Populate Task Dropdowns -----
         function populateTaskDropdowns() {
-            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            const timeSlots = ['7am-9am', '9am-1130am', '1130am-12pm', '12pm-330pm', '330pm-530pm'];
             
             timeSlots.forEach(slot => {
                 const container = document.getElementById(`tasks-${slot}`);
@@ -612,7 +564,7 @@
 
         // ----- Add Lunch Break Restrictions -----
         function addLunchBreakRestrictions() {
-            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            const timeSlots = ['7am-9am', '9am-1130am', '1130am-12pm', '12pm-330pm', '330pm-530pm'];
             
             timeSlots.forEach(slot => {
                 const container = document.getElementById(`tasks-${slot}`);
@@ -629,7 +581,7 @@
 
         // ----- Update Lunch Break Availability -----
         function updateLunchBreakAvailability() {
-            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            const timeSlots = ['7am-9am', '9am-1130am', '1130am-12pm', '12pm-330pm', '330pm-530pm'];
             let lunchBreakSelected = false;
             let selectedSlot = null;
             
@@ -648,6 +600,7 @@
             });
             
             // Update all dropdowns to disable/enable lunch break option
+            // Note: Lunch break is always selected for 1130am-12pm slot, so disable it in other slots
             timeSlots.forEach(slot => {
                 const container = document.getElementById(`tasks-${slot}`);
                 if (container) {
@@ -655,13 +608,13 @@
                     selects.forEach(select => {
                         const lunchOption = select.querySelector('option[value="Lunch Break"]');
                         if (lunchOption) {
-                            if (lunchBreakSelected && slot !== selectedSlot) {
-                                // Disable lunch break in other slots
+                            // Always disable lunch break in slots other than 1130am-12pm
+                            if (slot !== '1130am-12pm') {
                                 lunchOption.disabled = true;
                                 lunchOption.style.color = '#9ca3af';
                                 lunchOption.style.backgroundColor = '#f3f4f6';
                             } else {
-                                // Enable lunch break in this slot
+                                // Enable lunch break in 1130am-12pm slot
                                 lunchOption.disabled = false;
                                 lunchOption.style.color = '';
                                 lunchOption.style.backgroundColor = '';
@@ -672,11 +625,60 @@
             });
         }
 
+        // ----- Check if Date is Editable -----
+        function isDateEditable(date) {
+            if (!date) return false;
+            
+            // Get today's date in California (Pacific) timezone
+            const now = new Date();
+            const pacificTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+            const todayPacific = new Date(pacificTime.getFullYear(), pacificTime.getMonth(), pacificTime.getDate());
+            
+            // Parse the selected date (format: YYYY-MM-DD)
+            const [year, month, day] = date.split('-').map(Number);
+            const selectedDate = new Date(year, month - 1, day);
+            
+            // Compare dates (not times)
+            return selectedDate.getTime() >= todayPacific.getTime();
+        }
+
+        // ----- Set Timesheet Edit Mode -----
+        function setTimesheetEditMode(editable) {
+            const timeSlots = ['7am-9am', '9am-1130am', '1130am-12pm', '12pm-330pm', '330pm-530pm'];
+            
+            timeSlots.forEach(slot => {
+                const container = document.getElementById(`tasks-${slot}`);
+                if (container) {
+                    const selects = container.querySelectorAll('select');
+                    selects.forEach(select => {
+                        select.disabled = !editable;
+                    });
+                    
+                    const addButtons = container.parentElement.querySelectorAll('button[onclick^="addTaskInput"]');
+                    addButtons.forEach(button => {
+                        button.disabled = !editable;
+                    });
+                }
+            });
+            
+            submitTimesheet.disabled = !editable;
+            
+            if (!editable) {
+                submitTimesheet.classList.add('opacity-50', 'cursor-not-allowed');
+                submitTimesheet.innerHTML = '<i class="fas fa-lock mr-2"></i>View Only - Cannot Edit Past Timesheets';
+            } else {
+                submitTimesheet.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitTimesheet.innerHTML = '<i class="fas fa-save mr-2"></i>Submit Timesheet';
+            }
+        }
+
         // ----- Date Selection Handler -----
         selectedDate.addEventListener('change', async (e) => {
             const date = e.target.value;
             if (date) {
                 timesheetInputs.classList.remove('hidden');
+                const editable = isDateEditable(date);
+                setTimesheetEditMode(editable);
                 await loadTimesheetForDate(date);
             } else {
                 timesheetInputs.classList.add('hidden');
@@ -704,18 +706,24 @@
 
         // ----- Populate Timesheet Fields -----
         function populateTimesheetFields(data) {
-            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            const timeSlots = ['7am-9am', '9am-1130am', '1130am-12pm', '12pm-330pm', '330pm-530pm'];
             
             timeSlots.forEach(slot => {
                 const container = document.getElementById(`tasks-${slot}`);
                 container.innerHTML = '';
                 
-                if (data.tasks && data.tasks[slot] && data.tasks[slot].length > 0) {
+                // Always auto-fill lunch break for 1130am-12pm slot
+                if (slot === '1130am-12pm') {
+                    const input = createTaskInput('Lunch Break', slot, 0);
+                    container.appendChild(input);
+                } else if (data.tasks && data.tasks[slot] && data.tasks[slot].length > 0) {
+                    // Load existing tasks for this slot
                     data.tasks[slot].forEach((task, index) => {
                         const input = createTaskInput(task, slot, index);
                         container.appendChild(input);
                     });
                 } else {
+                    // Empty slot
                     const input = createTaskInput('', slot, 0);
                     container.appendChild(input);
                 }
@@ -727,13 +735,20 @@
 
         // ----- Clear Timesheet Fields -----
         function clearTimesheetFields() {
-            const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+            const timeSlots = ['7am-9am', '9am-1130am', '1130am-12pm', '12pm-330pm', '330pm-530pm'];
             
             timeSlots.forEach(slot => {
                 const container = document.getElementById(`tasks-${slot}`);
                 container.innerHTML = '';
-                const input = createTaskInput('', slot, 0);
-                container.appendChild(input);
+                
+                // Auto-fill lunch break for 1130am-12pm slot
+                if (slot === '1130am-12pm') {
+                    const input = createTaskInput('Lunch Break', slot, 0);
+                    container.appendChild(input);
+                } else {
+                    const input = createTaskInput('', slot, 0);
+                    container.appendChild(input);
+                }
             });
             
             // Apply lunch break restrictions after clearing fields
@@ -803,19 +818,32 @@
                 return;
             }
 
+            // Check if date is editable
+            if (!isDateEditable(date)) {
+                alert('You cannot edit or submit timesheets for past dates. This timesheet is view-only.');
+                return;
+            }
+
             submitTimesheet.disabled = true;
             submitTimesheet.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
 
             try {
                 const tasks = {};
-                const timeSlots = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+                const timeSlots = ['7am-9am', '9am-1130am', '1130am-12pm', '12pm-330pm', '330pm-530pm'];
                 
                 timeSlots.forEach(slot => {
                     const container = document.getElementById(`tasks-${slot}`);
                     const selects = container.querySelectorAll('select');
-                    tasks[slot] = Array.from(selects)
+                    const taskValues = Array.from(selects)
                         .map(select => select.value.trim())
                         .filter(value => value !== '');
+                    
+                    // Ensure lunch break is always included for 1130am-12pm slot
+                    if (slot === '1130am-12pm' && !taskValues.includes('Lunch Break')) {
+                        taskValues.push('Lunch Break');
+                    }
+                    
+                    tasks[slot] = taskValues;
                 });
 
                 const timesheetData = {
@@ -840,8 +868,14 @@
                 console.error('Error submitting timesheet:', error);
                 alert('Failed to submit timesheet. Please try again.');
             } finally {
-                submitTimesheet.disabled = false;
-                submitTimesheet.innerHTML = '<i class="fas fa-save mr-2"></i>Submit Timesheet';
+                const editable = isDateEditable(date);
+                if (editable) {
+                    submitTimesheet.disabled = false;
+                    submitTimesheet.innerHTML = '<i class="fas fa-save mr-2"></i>Submit Timesheet';
+                } else {
+                    submitTimesheet.disabled = true;
+                    submitTimesheet.innerHTML = '<i class="fas fa-lock mr-2"></i>View Only - Cannot Edit Past Timesheets';
+                }
             }
         });
 
@@ -857,9 +891,15 @@
         // ----- Initialize -----
         loadCurrentTasks();
         
-        // Set default date to today
-        const today = new Date().toISOString().split('T')[0];
-        selectedDate.value = today;
+        // Set default date to today in California (Pacific) timezone
+        const now = new Date();
+        const pacificTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+        const todayPacific = new Date(pacificTime.getFullYear(), pacificTime.getMonth(), pacificTime.getDate());
+        const todayStr = `${todayPacific.getFullYear()}-${String(todayPacific.getMonth() + 1).padStart(2, '0')}-${String(todayPacific.getDate()).padStart(2, '0')}`;
+        
+        selectedDate.value = todayStr;
+        // Set max date to today to prevent selecting future dates
+        selectedDate.max = todayStr;
         selectedDate.dispatchEvent(new Event('change'));
     </script>
 </body>
