@@ -130,6 +130,10 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <button id="exportWeekBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
+                            <i class="fas fa-file-excel mr-2"></i>Export Week to Excel
+                        </button>
+                        <input type="date" id="weekDatePicker" class="px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm" title="Select any date in the week to export">
                         <button id="importExcelBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
                             <i class="fas fa-file-excel mr-2"></i>Import Timesheet Excel
                         </button>
@@ -153,10 +157,9 @@
                     <table class="w-full">
                         <thead class="bg-slate-50 dark:bg-slate-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Submitted By</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tasks Completed</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Submitted At</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Employee</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Timesheets</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Latest Submission</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -203,6 +206,27 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Employee Timesheets Modal -->
+    <div id="employeeTimesheetsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-4xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user text-2xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Employee Timesheets</h3>
+                <p id="employeeTimesheetsName" class="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1"></p>
+            </div>
+            <div id="employeeTimesheetsList" class="space-y-3">
+                <!-- Employee timesheets will be populated here -->
+            </div>
+            <div class="flex justify-center pt-6">
+                <button id="closeEmployeeModal" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 
@@ -327,8 +351,14 @@
         const searchEmployee = document.getElementById('searchEmployee');
         const filterDate = document.getElementById('filterDate');
         const refreshBtn = document.getElementById('refreshBtn');
+        const exportWeekBtn = document.getElementById('exportWeekBtn');
+        const weekDatePicker = document.getElementById('weekDatePicker');
         const importExcelBtn = document.getElementById('importExcelBtn');
         const importExcelFile = document.getElementById('importExcelFile');
+        const employeeTimesheetsModal = document.getElementById('employeeTimesheetsModal');
+        const employeeTimesheetsList = document.getElementById('employeeTimesheetsList');
+        const employeeTimesheetsName = document.getElementById('employeeTimesheetsName');
+        const closeEmployeeModal = document.getElementById('closeEmployeeModal');
         const viewTimesheetModal = document.getElementById('viewTimesheetModal');
         const closeViewModal = document.getElementById('closeViewModal');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
@@ -369,11 +399,11 @@
                 dateObj = new Date(date);
             }
             
-            // Format as dd/mm/yyyy
-            const day = String(dateObj.getDate()).padStart(2, '0');
+            // Format as mm/dd/yyyy
             const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
             const year = dateObj.getFullYear();
-            return `${day}/${month}/${year}`;
+            return `${month}/${day}/${year}`;
         }
 
         // ----- Password Protection -----
@@ -499,26 +529,33 @@
                     timesheets.push(timesheet);
                 });
 
-                // Sort timesheets by employee name (submittedBy)
-                timesheets.sort((a, b) => {
-                    const nameA = (a.submittedBy || 'Employee').toLowerCase();
-                    const nameB = (b.submittedBy || 'Employee').toLowerCase();
-                    return nameA.localeCompare(nameB);
-                });
-                
-                // Populate table with sorted data
+                // Group timesheets by employee
+                const timesheetsByEmployee = {};
                 timesheets.forEach(timesheet => {
+                    const employee = timesheet.submittedBy || 'Unknown Employee';
+                    if (!timesheetsByEmployee[employee]) {
+                        timesheetsByEmployee[employee] = [];
+                    }
+                    timesheetsByEmployee[employee].push(timesheet);
+                });
+
+                // Sort employees by name
+                const employeeNames = Object.keys(timesheetsByEmployee).sort((a, b) => 
+                    a.toLowerCase().localeCompare(b.toLowerCase())
+                );
+                
+                // Populate table with one row per employee
+                employeeNames.forEach(employeeName => {
+                    const employeeTimesheets = timesheetsByEmployee[employeeName];
+                    const latestTimesheet = employeeTimesheets[0]; // Already sorted by submittedAt desc
+                    const latestSubmittedDate = latestTimesheet.submittedAt?.toDate() || new Date(latestTimesheet.submittedAt);
+                    const totalCount = employeeTimesheets.length;
+                    
                     const row = document.createElement('tr');
                     row.className = 'hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
                     
-                    const submittedDate = timesheet.submittedAt?.toDate() || new Date(timesheet.submittedAt);
-                    const totalTasks = Object.values(timesheet.tasks || {}).flat().length;
-                    
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
-                            ${formatDate(timesheet.date)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
@@ -527,27 +564,24 @@
                                 </div>
                                 <div class="ml-3">
                                     <div class="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                        ${timesheet.submittedBy || 'Employee'}
+                                        ${employeeName}
                                     </div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                ${totalTasks} tasks
+                                ${totalCount} timesheet${totalCount !== 1 ? 's' : ''}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                            <div>${formatDate(submittedDate)}</div>
-                            <div class="text-xs">${submittedDate.toLocaleTimeString()}</div>
+                            <div>${formatDate(latestSubmittedDate)}</div>
+                            <div class="text-xs">${latestSubmittedDate.toLocaleTimeString()}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <button onclick="viewTimesheet('${timesheet.id}')" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors" title="View">
+                                <button onclick="viewEmployeeTimesheets('${employeeName}')" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors" title="View Timesheets">
                                     <i class="fas fa-eye"></i>
-                                </button>
-                                <button onclick="deleteTimesheet('${timesheet.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Delete">
-                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
@@ -626,6 +660,97 @@
             }
         });
 
+        // ----- View Employee Timesheets -----
+        window.viewEmployeeTimesheets = function(employeeName) {
+            const employeeTimesheets = timesheets.filter(ts => (ts.submittedBy || 'Unknown Employee') === employeeName);
+            
+            if (employeeTimesheets.length === 0) {
+                alert('No timesheets found for this employee.');
+                return;
+            }
+
+            // Group timesheets by week (Sunday to Saturday)
+            const timesheetsByWeek = {};
+            employeeTimesheets.forEach(timesheet => {
+                const weekKey = getWeekKey(timesheet.date);
+                if (!timesheetsByWeek[weekKey]) {
+                    timesheetsByWeek[weekKey] = [];
+                }
+                timesheetsByWeek[weekKey].push(timesheet);
+            });
+
+            // Sort weeks by date (most recent first)
+            const weekKeys = Object.keys(timesheetsByWeek).sort((a, b) => {
+                return new Date(b) - new Date(a);
+            });
+
+            employeeTimesheetsName.textContent = employeeName;
+            employeeTimesheetsList.innerHTML = '';
+
+            weekKeys.forEach(weekKey => {
+                const weekTimesheets = timesheetsByWeek[weekKey];
+                // Parse the weekKey (YYYY-MM-DD format)
+                const [year, month, day] = weekKey.split('-').map(Number);
+                const sunday = new Date(year, month - 1, day);
+                const saturday = new Date(sunday);
+                saturday.setDate(sunday.getDate() + 6);
+                
+                // Sort timesheets within the week by date
+                weekTimesheets.sort((a, b) => {
+                    return new Date(b.date) - new Date(a.date);
+                });
+
+                // Calculate total tasks for the week
+                const totalTasks = weekTimesheets.reduce((sum, ts) => {
+                    return sum + Object.values(ts.tasks || {}).flat().length;
+                }, 0);
+
+                // Get latest submission date
+                const latestSubmission = weekTimesheets.reduce((latest, ts) => {
+                    const submittedDate = ts.submittedAt?.toDate() || new Date(ts.submittedAt);
+                    return submittedDate > latest ? submittedDate : latest;
+                }, new Date(0));
+
+                const card = document.createElement('div');
+                card.className = 'bg-slate-50 dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-4">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Week: ${formatDate(sunday)} - ${formatDate(saturday)}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">${weekTimesheets.length} day${weekTimesheets.length !== 1 ? 's' : ''} submitted • Latest: ${formatDate(latestSubmission)} ${latestSubmission.toLocaleTimeString()}</p>
+                                </div>
+                                <div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                        ${totalTasks} tasks
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 ml-4">
+                            <button onclick="viewWeekTimesheet('${weekKey}', '${employeeName}')" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                <i class="fas fa-eye mr-2"></i>View
+                            </button>
+                            <button onclick="exportWeekTimesheetPdf('${weekKey}', '${employeeName}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                            </button>
+                            <button onclick="exportWeekTimesheetExcel('${weekKey}', '${employeeName}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                <i class="fas fa-file-excel mr-2"></i>Export Excel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                employeeTimesheetsList.appendChild(card);
+            });
+
+            employeeTimesheetsModal.classList.remove('hidden');
+        };
+
+        closeEmployeeModal.addEventListener('click', () => {
+            employeeTimesheetsModal.classList.add('hidden');
+        });
+
         // ----- View Timesheet -----
         window.viewTimesheet = async function(timesheetId) {
             try {
@@ -683,16 +808,326 @@
 
         exportPdfBtn.addEventListener('click', () => {
             if (currentTimesheetForPdf) {
-                exportTimesheetToPdf(currentTimesheetForPdf);
+                // Check if it's a week export
+                if (currentTimesheetForPdf.weekTimesheets) {
+                    exportWeekTimesheetToPdf(currentTimesheetForPdf.weekTimesheets, currentTimesheetForPdf.employeeName);
+                } else {
+                    exportTimesheetToPdf(currentTimesheetForPdf);
+                }
             }
         });
 
         // ----- Export Excel -----
         exportExcelBtn.addEventListener('click', () => {
             if (currentTimesheetForPdf) {
-                exportTimesheetToExcel(currentTimesheetForPdf);
+                // Check if it's a week export
+                if (currentTimesheetForPdf.weekTimesheets) {
+                    exportWeekTimesheetToExcel(currentTimesheetForPdf.weekTimesheets, currentTimesheetForPdf.employeeName);
+                } else {
+                    exportTimesheetToExcel(currentTimesheetForPdf);
+                }
             }
         });
+
+        // ----- Export Week Timesheet PDF -----
+        window.exportWeekTimesheetPdf = function(weekKey, employeeName) {
+            const weekTimesheets = timesheets.filter(ts => 
+                (ts.submittedBy || 'Unknown Employee') === employeeName && 
+                getWeekKey(ts.date) === weekKey
+            );
+            
+            if (weekTimesheets.length === 0) {
+                alert('No timesheets found for this week.');
+                return;
+            }
+
+            exportWeekTimesheetToPdf(weekTimesheets, employeeName);
+        };
+
+        // ----- Export Week Timesheet Excel -----
+        window.exportWeekTimesheetExcel = function(weekKey, employeeName) {
+            const weekTimesheets = timesheets.filter(ts => 
+                (ts.submittedBy || 'Unknown Employee') === employeeName && 
+                getWeekKey(ts.date) === weekKey
+            );
+            
+            if (weekTimesheets.length === 0) {
+                alert('No timesheets found for this week.');
+                return;
+            }
+
+            exportWeekTimesheetToExcel(weekTimesheets, employeeName);
+        };
+
+        // ----- View Week Timesheet -----
+        window.viewWeekTimesheet = function(weekKey, employeeName) {
+            const weekTimesheets = timesheets.filter(ts => 
+                (ts.submittedBy || 'Unknown Employee') === employeeName && 
+                getWeekKey(ts.date) === weekKey
+            );
+            
+            if (weekTimesheets.length === 0) {
+                alert('No timesheets found for this week.');
+                return;
+            }
+
+            // Sort by date
+            weekTimesheets.sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+            });
+
+            // Parse the weekKey (YYYY-MM-DD format)
+            const [year, month, day] = weekKey.split('-').map(Number);
+            const sunday = new Date(year, month - 1, day);
+            const saturday = new Date(sunday);
+            saturday.setDate(sunday.getDate() + 6);
+
+            document.getElementById('timesheetEmployeeName').textContent = employeeName;
+            document.getElementById('timesheetDate').textContent = `Week: ${formatDate(sunday)} - ${formatDate(saturday)}`;
+            
+            const detailsContainer = document.getElementById('timesheetDetails');
+            detailsContainer.innerHTML = '';
+
+            const timeSlots = [
+                { key: '7am-9am', label: '7:00 AM - 9:00 AM' },
+                { key: '9am-1130am', label: '9:00 AM - 11:30 AM' },
+                { key: '1130am-12pm', label: '11:30 AM - 12:00 PM' },
+                { key: '12pm-330pm', label: '12:00 PM - 3:30 PM' },
+                { key: '330pm-530pm', label: '3:30 PM - 5:30 PM' }
+            ];
+
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const weekDates = getWeekDates(weekKey);
+
+            weekDates.forEach((date, dayIndex) => {
+                const timesheet = weekTimesheets.find(ts => ts.date === date);
+                // Parse the date string to avoid UTC timezone issues
+                const [year, month, day] = date.split('-').map(Number);
+                const dateObj = new Date(year, month - 1, day);
+                // Get the actual day of the week for this date
+                const actualDayOfWeek = dateObj.getDay();
+                const dayName = dayNames[actualDayOfWeek];
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'bg-slate-50 dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600';
+                dayDiv.innerHTML = `
+                    <h4 class="font-semibold text-slate-900 dark:text-slate-100 mb-3">${dayName} - ${formatDate(dateObj)}</h4>
+                    ${timesheet ? `
+                        <div class="space-y-2">
+                            ${timeSlots.map(slot => {
+                                const tasks = timesheet.tasks?.[slot.key] || [];
+                                if (tasks.length > 0) {
+                                    return `
+                                        <div class="mb-2">
+                                            <p class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">${slot.label}</p>
+                                            <ul class="space-y-1">
+                                                ${tasks.map(task => `<li class="text-sm text-slate-700 dark:text-slate-300">• ${task}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    `;
+                                }
+                                return '';
+                            }).join('')}
+                        </div>
+                    ` : '<p class="text-sm text-slate-500 dark:text-slate-400">No timesheet submitted for this day.</p>'}
+                `;
+                detailsContainer.appendChild(dayDiv);
+            });
+
+            // Store week timesheets for export
+            currentTimesheetForPdf = { weekTimesheets, employeeName, weekKey };
+            viewTimesheetModal.classList.remove('hidden');
+        };
+
+        // ----- Export Week Timesheet to PDF -----
+        function exportWeekTimesheetToPdf(weekTimesheets, employeeName) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Get the week key (Sunday date) from the first timesheet
+            const weekKey = getWeekKey(weekTimesheets[0].date);
+            // Parse the weekKey (YYYY-MM-DD format) to avoid UTC issues
+            const [year, month, day] = weekKey.split('-').map(Number);
+            const sunday = new Date(year, month - 1, day);
+            const saturday = new Date(sunday);
+            saturday.setDate(sunday.getDate() + 6);
+
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('Weekly Timesheet Report', 20, 30);
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Employee: ${employeeName}`, 20, 50);
+            doc.text(`Week: ${formatDate(sunday)} - ${formatDate(saturday)}`, 20, 60);
+            
+            doc.setLineWidth(0.5);
+            doc.line(20, 70, 190, 70);
+            
+            const timeSlots = [
+                { key: '7am-9am', label: '7:00 AM - 9:00 AM' },
+                { key: '9am-1130am', label: '9:00 AM - 11:30 AM' },
+                { key: '1130am-12pm', label: '11:30 AM - 12:00 PM' },
+                { key: '12pm-330pm', label: '12:00 PM - 3:30 PM' },
+                { key: '330pm-530pm', label: '3:30 PM - 5:30 PM' }
+            ];
+
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            // Use the weekKey (Sunday) to generate week dates, not the first timesheet date
+            const weekDates = getWeekDates(weekKey);
+            
+            let yPosition = 85;
+            
+            weekDates.forEach((date, dayIndex) => {
+                const timesheet = weekTimesheets.find(ts => ts.date === date);
+                // Parse the date string to avoid UTC timezone issues
+                const [year, month, day] = date.split('-').map(Number);
+                const dateObj = new Date(year, month - 1, day);
+                // Get the actual day of the week for this date
+                const actualDayOfWeek = dateObj.getDay();
+                const dayName = dayNames[actualDayOfWeek];
+                
+                if (yPosition > 250) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${dayName} - ${formatDate(dateObj)}`, 20, yPosition);
+                yPosition += 10;
+                
+                if (timesheet) {
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    timeSlots.forEach(slot => {
+                        const tasks = timesheet.tasks?.[slot.key] || [];
+                        if (tasks.length > 0) {
+                            if (yPosition > 270) {
+                                doc.addPage();
+                                yPosition = 20;
+                            }
+                            doc.setFont(undefined, 'bold');
+                            doc.text(slot.label + ':', 25, yPosition);
+                            yPosition += 7;
+                            doc.setFont(undefined, 'normal');
+                            tasks.forEach(task => {
+                                if (yPosition > 270) {
+                                    doc.addPage();
+                                    yPosition = 20;
+                                }
+                                doc.text(`  • ${task}`, 30, yPosition);
+                                yPosition += 7;
+                            });
+                        }
+                    });
+                } else {
+                    doc.setFontSize(10);
+                    doc.text('No timesheet submitted for this day.', 25, yPosition);
+                    yPosition += 7;
+                }
+                
+                yPosition += 5;
+            });
+            
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.text(`Page ${i} of ${pageCount}`, 20, 285);
+                doc.text('Generated by Timesheet Admin Portal', 120, 285);
+            }
+            
+            const safeEmployeeName = employeeName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+            const fileName = `timesheet_${safeEmployeeName}_week_${formatDateForFilename(sunday)}_to_${formatDateForFilename(saturday)}.pdf`;
+            doc.save(fileName);
+        }
+
+        // ----- Export Week Timesheet to Excel -----
+        function exportWeekTimesheetToExcel(weekTimesheets, employeeName) {
+            const wb = XLSX.utils.book_new();
+            const excelData = [];
+            
+            // Get the week key (Sunday date) from the first timesheet
+            const weekKey = getWeekKey(weekTimesheets[0].date);
+            // Parse the weekKey (YYYY-MM-DD format) to avoid UTC issues
+            const [year, month, day] = weekKey.split('-').map(Number);
+            const sunday = new Date(year, month - 1, day);
+            const saturday = new Date(sunday);
+            saturday.setDate(sunday.getDate() + 6);
+
+            excelData.push(['Weekly Timesheet Report']);
+            excelData.push([]);
+            excelData.push(['Employee:', employeeName]);
+            excelData.push(['Week:', `${formatDate(sunday)} - ${formatDate(saturday)}`]);
+            excelData.push([]);
+
+            const timeSlots = [
+                { key: '7am-9am', label: '7:00 AM - 9:00 AM' },
+                { key: '9am-1130am', label: '9:00 AM - 11:30 AM' },
+                { key: '1130am-12pm', label: '11:30 AM - 12:00 PM' },
+                { key: '12pm-330pm', label: '12:00 PM - 3:30 PM' },
+                { key: '330pm-530pm', label: '3:30 PM - 5:30 PM' }
+            ];
+
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            // Use the weekKey (Sunday) to generate week dates, not the first timesheet date
+            const weekDates = getWeekDates(weekKey);
+
+            const headerRow = ['Time Slot'];
+            weekDates.forEach((date, index) => {
+                // Parse the date string to avoid UTC timezone issues
+                const [year, month, day] = date.split('-').map(Number);
+                const dateObj = new Date(year, month - 1, day);
+                // Get the actual day of the week for this date
+                const actualDayOfWeek = dateObj.getDay();
+                headerRow.push(`${dayNames[actualDayOfWeek]} (${formatDate(dateObj)})`);
+            });
+            excelData.push(headerRow);
+
+            timeSlots.forEach(slot => {
+                const row = [slot.label];
+                weekDates.forEach(date => {
+                    const timesheet = weekTimesheets.find(ts => ts.date === date);
+                    const tasks = timesheet?.tasks?.[slot.key] || [];
+                    if (tasks.length > 0) {
+                        row.push(tasks.join(', '));
+                    } else {
+                        row.push('No tasks');
+                    }
+                });
+                excelData.push(row);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+            const colWidths = [{ wch: 25 }];
+            weekDates.forEach(() => colWidths.push({ wch: 30 }));
+            ws['!cols'] = colWidths;
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Weekly Timesheet');
+
+            const safeEmployeeName = employeeName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+            const fileName = `timesheet_${safeEmployeeName}_week_${formatDateForFilename(sunday)}_to_${formatDateForFilename(saturday)}.xlsx`;
+            
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // ----- Export Timesheet PDF (from employee list) - kept for backward compatibility -----
+        window.exportTimesheetPdf = function(timesheetId) {
+            const timesheet = timesheets.find(ts => ts.id === timesheetId);
+            if (timesheet) {
+                exportTimesheetToPdf(timesheet);
+            }
+        };
+
+        // ----- Export Timesheet Excel (from employee list) - kept for backward compatibility -----
+        window.exportTimesheetExcel = function(timesheetId) {
+            const timesheet = timesheets.find(ts => ts.id === timesheetId);
+            if (timesheet) {
+                exportTimesheetToExcel(timesheet);
+            }
+        };
 
         function exportTimesheetToPdf(timesheet) {
             const { jsPDF } = window.jspdf;
@@ -846,6 +1281,212 @@
             XLSX.writeFile(wb, fileName);
         }
 
+        // ----- Week Calculation Functions (Sunday to Saturday) -----
+        function getSundayOfWeek(date) {
+            // Handle both date strings (YYYY-MM-DD) and Date objects
+            let d;
+            if (typeof date === 'string') {
+                // Parse YYYY-MM-DD format to avoid UTC timezone issues
+                const [year, month, day] = date.split('-').map(Number);
+                d = new Date(year, month - 1, day);
+            } else {
+                d = new Date(date);
+            }
+            
+            // Ensure we're working with local date, not UTC
+            const year = d.getFullYear();
+            const month = d.getMonth();
+            const dayOfMonth = d.getDate();
+            const dayOfWeek = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            
+            // For Sunday-Saturday weeks:
+            // If it's Sunday (0), that's the start of the week
+            // If it's Monday-Friday (1-5), go back to the previous Sunday
+            // If it's Saturday (6), it belongs to the NEXT week (go forward to next Sunday)
+            let daysToAdjust;
+            if (dayOfWeek === 6) {
+                // Saturday belongs to next week - go forward 1 day to next Sunday
+                daysToAdjust = 1;
+            } else {
+                // Go back to previous Sunday
+                daysToAdjust = -dayOfWeek;
+            }
+            
+            const sundayDate = new Date(year, month, dayOfMonth + daysToAdjust);
+            sundayDate.setHours(0, 0, 0, 0);
+            return sundayDate;
+        }
+
+        function getWeekDates(date) {
+            // Handle both date strings (YYYY-MM-DD) and Date objects
+            let dateObj;
+            if (typeof date === 'string') {
+                // Parse YYYY-MM-DD format
+                const [year, month, day] = date.split('-').map(Number);
+                dateObj = new Date(year, month - 1, day);
+            } else {
+                dateObj = new Date(date);
+            }
+            const sunday = getSundayOfWeek(dateObj);
+            const weekDates = [];
+            for (let i = 0; i < 7; i++) {
+                const weekDate = new Date(sunday);
+                weekDate.setDate(sunday.getDate() + i);
+                const year = weekDate.getFullYear();
+                const month = String(weekDate.getMonth() + 1).padStart(2, '0');
+                const day = String(weekDate.getDate()).padStart(2, '0');
+                weekDates.push(`${year}-${month}-${day}`);
+            }
+            return weekDates;
+        }
+
+        function getWeekKey(date) {
+            const sunday = getSundayOfWeek(date);
+            return `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${String(sunday.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatDateForFilename(date) {
+            if (!date) return '';
+            const dateObj = typeof date === 'string' ? new Date(date) : date;
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${month}-${day}-${year}`;
+        }
+
+        async function exportWeekToExcel(selectedDate) {
+            if (!selectedDate) {
+                alert('Please select a date to export the week.');
+                return;
+            }
+
+            try {
+                exportWeekBtn.disabled = true;
+                exportWeekBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+
+                // Get all dates in the week (Sunday to Saturday)
+                const weekDates = getWeekDates(selectedDate);
+                const sunday = new Date(weekDates[0]);
+                const saturday = new Date(weekDates[6]);
+
+                // Query all timesheets for the week
+                const weekTimesheets = [];
+                for (const date of weekDates) {
+                    const q = query(timesheetsRef, where('date', '==', date));
+                    const querySnapshot = await getDocs(q);
+                    querySnapshot.forEach((doc) => {
+                        weekTimesheets.push({ id: doc.id, ...doc.data() });
+                    });
+                }
+
+                if (weekTimesheets.length === 0) {
+                    alert('No timesheets found for the selected week.');
+                    exportWeekBtn.disabled = false;
+                    exportWeekBtn.innerHTML = '<i class="fas fa-file-excel mr-2"></i>Export Week to Excel';
+                    return;
+                }
+
+                // Group timesheets by worker
+                const timesheetsByWorker = {};
+                weekTimesheets.forEach(timesheet => {
+                    const worker = timesheet.submittedBy || 'Unknown Employee';
+                    if (!timesheetsByWorker[worker]) {
+                        timesheetsByWorker[worker] = [];
+                    }
+                    timesheetsByWorker[worker].push(timesheet);
+                });
+
+                // Export each worker's timesheet to a separate file
+                const workerNames = Object.keys(timesheetsByWorker);
+                let exportedCount = 0;
+
+                for (const workerName of workerNames) {
+                    const workerTimesheets = timesheetsByWorker[workerName];
+                    
+                    // Create a new workbook for this worker
+                    const wb = XLSX.utils.book_new();
+                    const excelData = [];
+
+                    // Header
+                    excelData.push(['Weekly Timesheet Report']);
+                    excelData.push([]);
+                    excelData.push(['Employee:', workerName]);
+                    excelData.push(['Week:', `${formatDate(sunday)} - ${formatDate(saturday)}`]);
+                    excelData.push([]);
+
+                    // Create a row for each day of the week
+                    const timeSlots = [
+                        { key: '7am-9am', label: '7:00 AM - 9:00 AM' },
+                        { key: '9am-1130am', label: '9:00 AM - 11:30 AM' },
+                        { key: '1130am-12pm', label: '11:30 AM - 12:00 PM' },
+                        { key: '12pm-330pm', label: '12:00 PM - 3:30 PM' },
+                        { key: '330pm-530pm', label: '3:30 PM - 5:30 PM' }
+                    ];
+
+                    // Create header row with days
+                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const headerRow = ['Time Slot'];
+                    weekDates.forEach((date, index) => {
+                        const dateObj = new Date(date);
+                        headerRow.push(`${dayNames[index]} (${formatDate(dateObj)})`);
+                    });
+                    excelData.push(headerRow);
+
+                    // For each time slot, create a row with tasks for each day
+                    timeSlots.forEach(slot => {
+                        const row = [slot.label];
+                        weekDates.forEach(date => {
+                            const timesheet = workerTimesheets.find(ts => ts.date === date);
+                            const tasks = timesheet?.tasks?.[slot.key] || [];
+                            if (tasks.length > 0) {
+                                row.push(tasks.join(', '));
+                            } else {
+                                row.push('No tasks');
+                            }
+                        });
+                        excelData.push(row);
+                    });
+
+                    // Create worksheet from data
+                    const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+                    // Set column widths
+                    const colWidths = [{ wch: 25 }]; // Time Slot column
+                    weekDates.forEach(() => colWidths.push({ wch: 30 })); // Day columns
+                    ws['!cols'] = colWidths;
+
+                    // Add worksheet to workbook
+                    XLSX.utils.book_append_sheet(wb, ws, 'Weekly Timesheet');
+
+                    // Generate filename
+                    const safeWorkerName = workerName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                    const fileName = `timesheet_${safeWorkerName}_week_${formatDateForFilename(sunday)}_to_${formatDateForFilename(saturday)}.xlsx`;
+
+                    // Save file
+                    XLSX.writeFile(wb, fileName);
+                    exportedCount++;
+                }
+
+                alert(`Successfully exported ${exportedCount} file(s) for the week ${formatDate(sunday)} - ${formatDate(saturday)}.`);
+            } catch (error) {
+                console.error('Error exporting week to Excel:', error);
+                alert('Failed to export week to Excel. Please try again.');
+            } finally {
+                exportWeekBtn.disabled = false;
+                exportWeekBtn.innerHTML = '<i class="fas fa-file-excel mr-2"></i>Export Week to Excel';
+            }
+        }
+
+        exportWeekBtn.addEventListener('click', () => {
+            const selectedDate = weekDatePicker.value;
+            if (!selectedDate) {
+                alert('Please select a date in the week you want to export.');
+                weekDatePicker.focus();
+                return;
+            }
+            exportWeekToExcel(selectedDate);
+        });
+
         // ----- Filter and Refresh -----
         function applyFilters() {
             const selectedDate = filterDate.value;
@@ -938,7 +1579,7 @@
                         const day = String(dateObj.getDate()).padStart(2, '0');
                         date = `${year}-${month}-${day}`;
                     } else {
-                        // Try parsing formats like "12/11/2025" or "11-12-2025"
+                        // Try parsing formats like "12/11/2025" (mm/dd/yyyy) or "11-12-2025" (mm-dd-yyyy)
                         const dateMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
                         if (dateMatch) {
                             const [, month, day, year] = dateMatch;
@@ -1045,16 +1686,26 @@
             timesheetsTable.innerHTML = '';
             mobileTimesheetsView.innerHTML = '';
             
-            // Sort filtered timesheets by employee name
-            timesheetsToShow.sort((a, b) => {
-                const nameA = (a.submittedBy || 'Employee').toLowerCase();
-                const nameB = (b.submittedBy || 'Employee').toLowerCase();
-                return nameA.localeCompare(nameB);
-            });
-            
+            // Group timesheets by employee
+            const timesheetsByEmployee = {};
             timesheetsToShow.forEach(timesheet => {
-                const submittedDate = timesheet.submittedAt?.toDate() || new Date(timesheet.submittedAt);
-                const totalTasks = Object.values(timesheet.tasks || {}).flat().length;
+                const employee = timesheet.submittedBy || 'Unknown Employee';
+                if (!timesheetsByEmployee[employee]) {
+                    timesheetsByEmployee[employee] = [];
+                }
+                timesheetsByEmployee[employee].push(timesheet);
+            });
+
+            // Sort employees by name
+            const employeeNames = Object.keys(timesheetsByEmployee).sort((a, b) => 
+                a.toLowerCase().localeCompare(b.toLowerCase())
+            );
+            
+            employeeNames.forEach(employeeName => {
+                const employeeTimesheets = timesheetsByEmployee[employeeName];
+                const latestTimesheet = employeeTimesheets[0];
+                const latestSubmittedDate = latestTimesheet.submittedAt?.toDate() || new Date(latestTimesheet.submittedAt);
+                const totalCount = employeeTimesheets.length;
                 
                 // Desktop table row
                 const row = document.createElement('tr');
@@ -1062,9 +1713,6 @@
                 
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
-                        ${timesheet.date}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
                                 <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
@@ -1073,27 +1721,24 @@
                             </div>
                             <div class="ml-3">
                                 <div class="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                    ${timesheet.submittedBy || 'Employee'}
+                                    ${employeeName}
                                 </div>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            ${totalTasks} tasks
+                            ${totalCount} timesheet${totalCount !== 1 ? 's' : ''}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                        <div>${formatDate(submittedDate)}</div>
-                        <div class="text-xs">${submittedDate.toLocaleTimeString()}</div>
+                        <div>${formatDate(latestSubmittedDate)}</div>
+                        <div class="text-xs">${latestSubmittedDate.toLocaleTimeString()}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex items-center space-x-2">
-                            <button onclick="viewTimesheet('${timesheet.id}')" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors" title="View">
+                            <button onclick="viewEmployeeTimesheets('${employeeName}')" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors" title="View Timesheets">
                                 <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="deleteTimesheet('${timesheet.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Delete">
-                                <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </td>
@@ -1113,33 +1758,25 @@
                             </div>
                             <div>
                                 <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    ${timesheet.submittedBy || 'Employee'}
+                                    ${employeeName}
                                 </h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">${formatDate(timesheet.date)}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${totalCount} timesheet${totalCount !== 1 ? 's' : ''}</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button onclick="viewTimesheet('${timesheet.id}')" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors" title="View">
+                            <button onclick="viewEmployeeTimesheets('${employeeName}')" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors" title="View Timesheets">
                                 <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="deleteTimesheet('${timesheet.id}')" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Delete">
-                                <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                <i class="fas fa-tasks mr-1"></i>${totalTasks} tasks
-                            </span>
-                        </div>
                         <div class="text-right">
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Submitted</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Latest Submission</p>
                             <p class="text-xs font-medium text-slate-900 dark:text-slate-100">
-                                ${formatDate(submittedDate)}
+                                ${formatDate(latestSubmittedDate)}
                             </p>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                ${submittedDate.toLocaleTimeString()}
+                                ${latestSubmittedDate.toLocaleTimeString()}
                             </p>
                         </div>
                     </div>
@@ -1176,7 +1813,7 @@
         });
 
         // ----- Close Modals on Outside Click -----
-        [addTaskModal, viewTimesheetModal, deleteModal, deleteTimesheetModal].forEach(modal => {
+        [addTaskModal, viewTimesheetModal, employeeTimesheetsModal, deleteModal, deleteTimesheetModal].forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
                     modal.classList.add('hidden');
